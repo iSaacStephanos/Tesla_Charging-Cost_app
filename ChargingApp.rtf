@@ -1,0 +1,136 @@
+{\rtf1\ansi\ansicpg932\cocoartf2870
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="ja">\
+<head>\
+  <meta charset="UTF-8">\
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+  <title>Tesla \uc0\u20805 \u38651 \u12467 \u12473 \u12488 \u65286 \u35352 \u37682 </title>\
+  <style>\
+    body \{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 16px; display: flex; justify-content: center; \}\
+    .card \{ background: #1e293b; max-width: 420px; width: 100%; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); \}\
+    h1, h2 \{ text-align: center; color: #38bdf8; margin-top: 0; \}\
+    h1 \{ font-size: 1.25rem; margin-bottom: 20px; \}\
+    h2 \{ font-size: 1rem; margin: 24px 0 12px; border-bottom: 1px solid #334155; padding-bottom: 8px; \}\
+    .form-group \{ margin-bottom: 16px; \}\
+    label \{ display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; \}\
+    input, select \{ width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 1rem; box-sizing: border-box; \}\
+    .result-box \{ margin-top: 16px; padding: 16px; border-radius: 12px; background: #0f172a; border: 1px solid #334155; \}\
+    .stat-row \{ display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; font-size: 0.95rem; \}\
+    .stat-row:last-child \{ margin-bottom: 0; \}\
+    .highlight \{ font-size: 1.4rem; font-weight: bold; color: #4ade80; \}\
+    .warning \{ color: #f87171; \}\
+    .btn-group \{ display: flex; gap: 8px; margin-top: 16px; \}\
+    button \{ flex: 1; padding: 12px 4px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: #fff; font-size: 0.85rem; \}\
+    .btn-success \{ background: #059669; \}\
+    .btn-ev \{ background: #ca8a04; \}\
+    .btn-ice \{ background: #dc2626; \}\
+    .log-list \{ list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; font-size: 0.85rem; \}\
+    .log-item \{ background: #0f172a; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 4px solid transparent; \}\
+    .log-success \{ border-left-color: #059669; \}\
+    .log-ev \{ border-left-color: #ca8a04; \}\
+    .log-ice \{ border-left-color: #dc2626; \}\
+    .log-time \{ color: #94a3b8; font-size: 0.75rem; \}\
+  </style>\
+</head>\
+<body>\
+\
+<div class="card">\
+  <h1>Tesla \uc0\u20805 \u38651 \u12471 \u12511 \u12517 \u12524 \u12540 \u12479 \u12540 </h1>\
+  \
+  <div class="form-group">\
+    <label>\uc0\u29694 \u22312 \u12398 \u12496 \u12483 \u12486 \u12522 \u12540 \u27531 \u37327  (%)</label>\
+    <input type="number" id="currentSoc" value="47" min="0" max="100">\
+  </div>\
+  <div class="form-group">\
+    <label>\uc0\u30446 \u27161 \u12398 \u20805 \u38651 \u19978 \u38480  (%)</label>\
+    <input type="number" id="targetSoc" value="80" min="0" max="100">\
+  </div>\
+  <div class="form-group">\
+    <label>\uc0\u39376 \u36554 \u26009 \u37329  (\u20870 )</label>\
+    <input type="number" id="cost" value="500" min="0">\
+  </div>\
+\
+  <div class="result-box">\
+    <div class="stat-row">\
+      <span>\uc0\u23455 \u36074 \u21336 \u20385 </span>\
+      <span class="highlight" id="unitPrice">- \uc0\u20870 </span>\
+    </div>\
+    <div class="stat-row">\
+      <span>SC\uc0\u27604 \u12398 \u24046 \u38989 </span>\
+      <span id="scComparison" style="font-weight: bold;">- \uc0\u20870 </span>\
+    </div>\
+  </div>\
+\
+  <h2>\uc0\u29694 \u22320 \u12398 \u29366 \u27841 \u12434 \u35352 \u37682 </h2>\
+  <div class="btn-group">\
+    <button class="btn-success" onclick="saveLog('\uc0\u20805 \u38651 \u12391 \u12365 \u12383 ', 'log-success')">\u55357 \u57314  \u20805 \u38651 \u38283 \u22987 </button>\
+    <button class="btn-ev" onclick="saveLog('\uc0\u20808 \u32004 \u12354 \u12426 (EV)', 'log-ev')">\u55357 \u57313  \u20808 \u32004 \u12354 \u12426 </button>\
+    <button class="btn-ice" onclick="saveLog('\uc0\u19968 \u33324 \u36554 \u39376 \u36554 ', 'log-ice')">\u55357 \u56628  \u19968 \u33324 \u36554 </button>\
+  </div>\
+\
+  <h2>\uc0\u35370 \u21839 \u23653 \u27508 </h2>\
+  <ul class="log-list" id="logList"></ul>\
+</div>\
+\
+<script>\
+  const CAPACITY = 79.0;\
+  const SC_RATE = 50.0;\
+  let logs = JSON.parse(localStorage.getItem('tesla_logs')) || [];\
+\
+  function calculate() \{\
+    const current = parseFloat(document.getElementById('currentSoc').value) || 0;\
+    const target = parseFloat(document.getElementById('targetSoc').value) || 0;\
+    const fee = parseFloat(document.getElementById('cost').value) || 0;\
+\
+    const diffSoc = Math.max(0, target - current);\
+    const kwh = CAPACITY * (diffSoc / 100);\
+    const unitPrice = kwh > 0 ? (fee / kwh) : 0;\
+    const saving = (kwh * SC_RATE) - fee;\
+\
+    document.getElementById('unitPrice').innerText = `$\{unitPrice.toFixed(1)\} \uc0\u20870 /kWh`;\
+    const scCompEl = document.getElementById('scComparison');\
+    \
+    if (kwh === 0) \{\
+      scCompEl.innerText = '0 \uc0\u20870 ';\
+      scCompEl.className = '';\
+    \} else if (saving >= 0) \{\
+      scCompEl.innerText = `SC\uc0\u12424 \u12426  $\{Math.round(saving).toLocaleString()\}\u20870  \u12362 \u24471 `;\
+      scCompEl.className = ''; scCompEl.style.color = '#4ade80';\
+    \} else \{\
+      scCompEl.innerText = `SC\uc0\u12424 \u12426  $\{Math.round(Math.abs(saving)).toLocaleString()\}\u20870  \u21106 \u39640 `;\
+      scCompEl.className = 'warning';\
+    \}\
+  \}\
+\
+  function saveLog(status, typeClass) \{\
+    const now = new Date();\
+    const timeStr = `$\{now.getMonth()+1\}/$\{now.getDate()\} $\{now.getHours().toString().padStart(2,'0')\}:$\{now.getMinutes().toString().padStart(2,'0')\}`;\
+    logs.unshift(\{ time: timeStr, status: status, type: typeClass \});\
+    if(logs.length > 30) logs.pop(); // \uc0\u26368 \u26032 30\u20214 \u12434 \u20445 \u25345 \
+    localStorage.setItem('tesla_logs', JSON.stringify(logs));\
+    renderLogs();\
+  \}\
+\
+  function renderLogs() \{\
+    const list = document.getElementById('logList');\
+    list.innerHTML = '';\
+    logs.forEach(log => \{\
+      list.innerHTML += `<li class="log-item $\{log.type\}">\
+        <span>$\{log.status\}</span>\
+        <span class="log-time">$\{log.time\}</span>\
+      </li>`;\
+    \});\
+  \}\
+\
+  document.querySelectorAll('input').forEach(el => el.addEventListener('input', calculate));\
+  calculate();\
+  renderLogs();\
+</script>\
+</body>\
+</html>}
