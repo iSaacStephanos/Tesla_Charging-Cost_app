@@ -24,12 +24,16 @@
     .btn-success { background: #059669; }
     .btn-ev { background: #ca8a04; }
     .btn-ice { background: #dc2626; }
-    .log-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; font-size: 0.85rem; }
-    .log-item { background: #0f172a; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 4px solid transparent; }
+    
+    /* 履歴と統計用のスタイル追加 */
+    .summary-box { background: #0f172a; border: 1px dashed #38bdf8; border-radius: 8px; padding: 12px; margin-bottom: 16px; text-align: center; font-size: 0.9rem; }
+    .log-list { list-style: none; padding: 0; margin: 0; max-height: 250px; overflow-y: auto; font-size: 0.85rem; }
+    .log-item { background: #0f172a; padding: 10px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border-left: 4px solid transparent; align-items: center;}
     .log-success { border-left-color: #059669; }
     .log-ev { border-left-color: #ca8a04; }
     .log-ice { border-left-color: #dc2626; }
-    .log-time { color: #94a3b8; font-size: 0.75rem; }
+    .log-time { color: #94a3b8; font-size: 0.75rem; text-align: right; min-width: 80px;}
+    .log-details { font-size: 0.75rem; color: #cbd5e1; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -79,19 +83,24 @@
   <h2>現地の状況を記録</h2>
   <div class="btn-group">
     <button class="btn-success" onclick="saveLog('充電開始', 'log-success')">🟢 充電開始</button>
-    <button class="btn-ev" onclick="saveLog('先約あり(EV)', 'log-ev')">🟡 先約あり</button>
-    <button class="btn-ice" onclick="saveLog('一般車駐車', 'log-ice')">🔴 一般車</button>
+    <button class="btn-ev" onclick="saveLog('先約あり', 'log-ev')">🟡 先約あり</button>
+    <button class="btn-ice" onclick="saveLog('一般車', 'log-ice')">🔴 一般車</button>
   </div>
 
-  <h2>訪問履歴</h2>
+  <h2>訪問履歴 ＆ トータル実績</h2>
+  
+  <div class="summary-box" id="totalStats">
+    <!-- ここに平均値と累計が自動計算されて入ります -->
+  </div>
+
   <ul class="log-list" id="logList"></ul>
 </div>
 
 <script>
-  const CAPACITY = 79.0;     // モデル3 ロングレンジ (kWh)
-  const EFFICIENCY = 0.90;   // 充電変換効率 (実効90%)
-  const SC_RATE = 50.0;      // SC標準単価 (円/kWh)
-  let logs = JSON.parse(localStorage.getItem('tesla_logs')) || [];
+  const CAPACITY = 79.0;
+  const EFFICIENCY = 0.90;
+  const SC_RATE = 50.0;
+  let logs = JSON.parse(localStorage.getItem('tesla_logs_v2')) || [];
 
   function calculate() {
     const current = parseFloat(document.getElementById('currentSoc').value) || 0;
@@ -118,37 +127,76 @@
       scCompEl.className = '';
     } else if (saving >= 0) {
       scCompEl.innerText = `SCより ${Math.round(saving).toLocaleString()}円 お得`;
-      scCompEl.className = '';
-      scCompEl.style.color = '#4ade80';
+      scCompEl.className = ''; scCompEl.style.color = '#4ade80';
     } else {
       scCompEl.innerText = `SCより ${Math.round(Math.abs(saving)).toLocaleString()}円 割高`;
       scCompEl.className = 'warning';
     }
+    
+    return { fee, kwh, unitPrice };
   }
 
   function saveLog(status, typeClass) {
     const now = new Date();
     const days = ['日', '月', '火', '水', '木', '金', '土'];
     const dayOfWeek = days[now.getDay()];
-    
-    // 日付と曜日のフォーマット（例: 10/2(金) 20:30）
     const timeStr = `${now.getMonth()+1}/${now.getDate()}(${dayOfWeek}) ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
     
-    logs.unshift({ time: timeStr, status: status, type: typeClass });
-    if(logs.length > 30) logs.pop();
-    localStorage.setItem('tesla_logs', JSON.stringify(logs));
+    // 現在の計算結果（料金、電力量、単価）を取得
+    const currentCalc = calculate();
+    
+    logs.unshift({ 
+      time: timeStr, 
+      status: status, 
+      type: typeClass,
+      fee: currentCalc.fee,
+      kwh: currentCalc.kwh,
+      unitPrice: currentCalc.unitPrice
+    });
+    
+    if(logs.length > 50) logs.pop(); // 最新50件まで保存
+    localStorage.setItem('tesla_logs_v2', JSON.stringify(logs));
     renderLogs();
   }
 
   function renderLogs() {
     const list = document.getElementById('logList');
     list.innerHTML = '';
+    
+    let totalFee = 0;
+    let totalKwh = 0;
+    let chargeCount = 0;
+
     logs.forEach(log => {
+      // 履歴リストの描画
+      let detailsHtml = '';
+      if (log.status === '充電開始' && log.fee !== undefined) {
+        detailsHtml = `<div class="log-details">${log.fee.toLocaleString()}円 / ${log.unitPrice.toFixed(1)} 円/kWh</div>`;
+        totalFee += log.fee;
+        totalKwh += log.kwh;
+        chargeCount++;
+      }
+
       list.innerHTML += `<li class="log-item ${log.type}">
-        <span>${log.status}</span>
+        <div>
+          <span style="font-weight: bold;">${log.status}</span>
+          ${detailsHtml}
+        </div>
         <span class="log-time">${log.time}</span>
       </li>`;
     });
+
+    // 平均値・トータルの計算と描画
+    const statsBox = document.getElementById('totalStats');
+    if (chargeCount > 0) {
+      const avgUnitPrice = totalKwh > 0 ? (totalFee / totalKwh) : 0;
+      statsBox.innerHTML = `
+        <div style="margin-bottom: 8px; color: #94a3b8;">累計 ${chargeCount}回 / ${totalFee.toLocaleString()}円</div>
+        <div>トータル平均単価: <span class="highlight-green">${avgUnitPrice.toFixed(1)} 円/kWh</span></div>
+      `;
+    } else {
+      statsBox.innerHTML = '<div style="color: #94a3b8;">まだ充電の実績記録がありません</div>';
+    }
   }
 
   document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calculate));
